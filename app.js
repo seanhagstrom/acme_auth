@@ -1,30 +1,43 @@
 const express = require('express');
 const app = express();
 app.use(express.json());
-const { models: { User }} = require('./db');
+const {
+  models: { User, Note },
+} = require('./db');
 const path = require('path');
 
-app.get('/', (req, res)=> res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
-app.post('/api/auth', async(req, res, next)=> {
+app.post('/api/auth', async (req, res, next) => {
   try {
-    res.send({ token: await User.authenticate(req.body)});
-  }
-  catch(ex){
+    res.send({ token: await User.authenticate(req.body) });
+  } catch (ex) {
     next(ex);
   }
 });
 
-app.get('/api/auth', async(req, res, next)=> {
+app.get('/api/auth', async (req, res, next) => {
   try {
     res.send(await User.byToken(req.headers.authorization));
-  }
-  catch(ex){
+  } catch (ex) {
     next(ex);
   }
 });
 
-app.use((err, req, res, next)=> {
+// GET /api/notes/:userID **get all notes by userid**
+app.get('/api/notes/:userId', async (req, res, next) => {
+  try {
+    const userNotes = await Note.findAll({
+      where: { userId: req.params.userId },
+    });
+    res.json(userNotes);
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+app.use((err, req, res, next) => {
   console.log(err);
   res.status(err.status || 500).send({ error: err.message });
 });

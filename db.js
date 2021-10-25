@@ -20,6 +20,15 @@ const User = conn.define('user', {
   password: STRING,
 });
 
+const Note = conn.define('note', {
+  text: {
+    type: Sequelize.STRING,
+  },
+});
+
+Note.belongsTo(User);
+User.hasMany(Note);
+
 User.byToken = async (token) => {
   try {
     // jwt token -> userid
@@ -41,7 +50,7 @@ User.byToken = async (token) => {
 User.authenticate = async ({ username, password }) => {
   const user = await User.findOne({
     where: {
-      username
+      username,
     },
   });
   const match = await bcrypt.compare(password, user.password);
@@ -73,6 +82,29 @@ const syncAndSeed = async () => {
   const [lucy, moe, larry] = await Promise.all(
     credentials.map((credential) => User.create(credential))
   );
+
+  const notes = [
+    {
+      text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem dolor sed viverra ipsum nunc aliquet bibendum enim facilisis. Massa vitae tortor condimentum lacinia quis vel eros donec.',
+    },
+    {
+      text: 'Pretium nibh ipsum consequat nisl vel pretium lectus. Sagittis aliquam malesuada bibendum arcu vitae. Dolor sit amet consectetur adipiscing. Bibendum est ultricies integer quis auctor elit sed vulputate mi.',
+    },
+    {
+      text: 'Tellus rutrum tellus pellentesque eu tincidunt tortor aliquam nulla. Leo a diam sollicitudin tempor id eu. Commodo quis imperdiet massa tincidunt nunc pulvinar. Mi quis hendrerit dolor magna eget est lorem ipsum dolor. ',
+    },
+    {
+      text: 'Another note',
+    },
+  ];
+  const [note1, note2, note3, note4] = await Promise.all(
+    notes.map((note) => Note.create(note))
+  );
+
+  await lucy.addNote(note1);
+  await moe.addNotes([note2, note4]);
+  await larry.addNote(note3);
+
   return {
     users: {
       lucy,
@@ -86,5 +118,6 @@ module.exports = {
   syncAndSeed,
   models: {
     User,
+    Note,
   },
 };
