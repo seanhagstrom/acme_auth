@@ -24,7 +24,6 @@ User.byToken = async (token) => {
   try {
     // jwt token -> userid
     const payload = jwt.verify(token, SECRET_KEY);
-    console.log(payload);
     const user = await User.findByPk(payload.userId);
     if (user) {
       return user;
@@ -45,8 +44,6 @@ User.authenticate = async ({ username, password }) => {
       username
     },
   });
-  console.log(user.password);
-  console.log('user object', user);
   const match = await bcrypt.compare(password, user.password);
   console.log('match here', match);
   if (match) {
@@ -60,9 +57,10 @@ User.authenticate = async ({ username, password }) => {
 
 User.beforeCreate(async (user) => {
   const saltRounds = 10;
-  await bcrypt.hash(user.password, saltRounds, function (err, hash) {
-    user.password = hash;
-  });
+  // console.log(user.password);
+  const hashed = await bcrypt.hash(user.password, saltRounds);
+  // console.log(hashed);
+  user.password = hashed;
 });
 
 const syncAndSeed = async () => {
